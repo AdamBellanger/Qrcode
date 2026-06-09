@@ -291,7 +291,7 @@ function App() {
                 <img
                   src={result.qrcode}
                   alt="QR code"
-                  className="mx-auto h-56 w-56"
+                  className="mx-auto h-auto w-44 max-w-full sm:w-56"
                 />
               </div>
 
@@ -420,7 +420,7 @@ function App() {
                     <label className="text-xs uppercase tracking-wider text-zinc-400">
                       Couleur du titre
                     </label>
-                    <div className="mt-1.5 flex items-center gap-2">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
                       {PRESET_COLORS.map((c) => (
                         <button
                           key={c}
@@ -473,9 +473,9 @@ function App() {
 
       {/* Footer — transparent, seuls les 3 pills glassmorphism sont visibles */}
       <footer className="relative z-10 px-6 pb-6 pt-2 sm:px-10">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-10 gap-y-3">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 sm:grid sm:grid-cols-3 sm:items-center">
           {/* Gauche — pill QR */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-zinc-300 shadow-lg shadow-black/20 backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-zinc-300 shadow-lg shadow-black/20 backdrop-blur-md sm:justify-self-start">
             <svg
               className="h-3.5 w-3.5 text-zinc-400"
               viewBox="0 0 24 24"
@@ -493,7 +493,7 @@ function App() {
           </div>
 
           {/* Centre — pill crédit */}
-          <div className="order-last inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-zinc-400 shadow-lg shadow-black/20 backdrop-blur-md sm:order-none">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-zinc-400 shadow-lg shadow-black/20 backdrop-blur-md sm:justify-self-center">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
             Made by{' '}
             <span className="font-medium text-zinc-200">Adam Bellanger</span>
@@ -504,7 +504,7 @@ function App() {
             href={IRIS_URL}
             target="_blank"
             rel="noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-zinc-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all hover:border-white/25 hover:bg-white/10"
+            className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-zinc-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all hover:border-white/25 hover:bg-white/10 sm:justify-self-end"
           >
             <img
               src={IRIS_LOGO}
