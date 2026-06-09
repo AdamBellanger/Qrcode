@@ -4,9 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3003:3000"
     environment:
-      # Public-facing base URL the QR codes will point at. Required.
       HOST: ${HOST:?HOST is required (e.g. https://qr.yourdomain.com)}
     volumes:
       - ./data:/data
@@ -18,3 +17,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    networks:
+      - services_default
+
+networks:
+  services_default:
+    external: true
