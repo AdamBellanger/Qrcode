@@ -8,9 +8,9 @@
 qr.yourdomain.com {
 	encode zstd gzip
 
-	# Autorise les uploads jusqu'à 30 Mo (marge au-dessus de la limite 25 Mo de l'app).
+	# Autorise les uploads jusqu'à 110 Mo (marge au-dessus de la limite 100 Mo de l'app).
 	request_body {
-		max_size 30MB
+		max_size 110MB
 	}
 
 	reverse_proxy localhost:3000

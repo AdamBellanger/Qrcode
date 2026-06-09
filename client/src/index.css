@@ -196,6 +196,21 @@ body {
   animation: pop-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Tab content transition when switching Fichier / URL */
+@keyframes switch-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-switch {
+  animation: switch-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* Shimmer overlay used on the loading button */
 .shimmer::after {
   content: '';
@@ -217,6 +232,7 @@ body {
   .wave-parallax > use,
   .animate-fade-up,
   .animate-pop-in,
+  .animate-switch,
   .shimmer::after {
     animation: none !important;
     transition: none !important;

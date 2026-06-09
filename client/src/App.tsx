@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 
-const ACCEPTED = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-const MAX_MB = 25
+const MAX_MB = 100
 const MAX_SIZE = MAX_MB * 1024 * 1024
 
 // École IRIS — campus de Rouen. Dépose le logo dans client/public/iris-logo.svg
@@ -10,7 +9,60 @@ const IRIS_LOGO = '/iris-logo.svg'
 
 interface UploadResult {
   qrcode: string
-  imageUrl: string
+  fileUrl: string
+}
+
+const isImage = (f: File) => f.type.startsWith('image/')
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} o`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`
+}
+
+type FileKind = 'image' | 'pdf' | 'video' | 'audio' | 'archive' | 'document' | 'other'
+
+function fileKind(f: File): FileKind {
+  const t = f.type
+  const ext = f.name.split('.').pop()?.toLowerCase() ?? ''
+  if (t.startsWith('image/')) return 'image'
+  if (t === 'application/pdf' || ext === 'pdf') return 'pdf'
+  if (t.startsWith('video/')) return 'video'
+  if (t.startsWith('audio/')) return 'audio'
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive'
+  if (['doc', 'docx', 'odt', 'xls', 'xlsx', 'csv', 'ods', 'ppt', 'pptx', 'txt'].includes(ext))
+    return 'document'
+  return 'other'
+}
+
+// Icon per file kind (Heroicons-style outline).
+function FileTypeIcon({ kind }: { kind: FileKind }) {
+  const paths: Record<FileKind, string> = {
+    image:
+      'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z',
+    pdf: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z',
+    video:
+      'M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z',
+    audio:
+      'M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z',
+    archive:
+      'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z',
+    document:
+      'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z',
+    other:
+      'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z',
+  }
+  return (
+    <svg
+      className="h-9 w-9 text-zinc-200"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d={paths[kind]} />
+    </svg>
+  )
 }
 
 function App() {
@@ -21,6 +73,8 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [mode, setMode] = useState<'file' | 'url'>('file')
+  const [url, setUrl] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const glowRef = useRef<HTMLDivElement>(null)
 
@@ -46,18 +100,15 @@ function App() {
   const selectFile = useCallback((f: File) => {
     setError(null)
     setResult(null)
-    if (!ACCEPTED.includes(f.type)) {
-      setError('Format non supporté. Utilisez JPG, PNG, GIF ou WebP.')
-      return
-    }
     if (f.size > MAX_SIZE) {
       setError(`Fichier trop volumineux. Taille maximale : ${MAX_MB} Mo.`)
       return
     }
     setFile(f)
+    // Only images get a visual preview; other types show an icon + size.
     setPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev)
-      return URL.createObjectURL(f)
+      return isImage(f) ? URL.createObjectURL(f) : null
     })
   }, [])
 
@@ -82,7 +133,7 @@ function App() {
     setError(null)
     try {
       const form = new FormData()
-      form.append('image', file)
+      form.append('file', file)
       const res = await fetch('/api/upload', { method: 'POST', body: form })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
@@ -97,13 +148,43 @@ function App() {
     }
   }
 
+  const generateFromUrl = async () => {
+    if (!url.trim()) return
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/qrcode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || `Échec (${res.status})`)
+      }
+      const data: UploadResult = await res.json()
+      setResult(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Échec.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const reset = () => {
     if (preview) URL.revokeObjectURL(preview)
     setFile(null)
     setPreview(null)
     setResult(null)
     setError(null)
+    setUrl('')
     if (inputRef.current) inputRef.current.value = ''
+  }
+
+  const switchMode = (m: 'file' | 'url') => {
+    if (m === mode) return
+    setMode(m)
+    reset()
   }
 
   const downloadQr = () => {
@@ -118,7 +199,7 @@ function App() {
 
   const copyLink = async () => {
     if (!result) return
-    await navigator.clipboard.writeText(result.imageUrl)
+    await navigator.clipboard.writeText(result.fileUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
@@ -187,7 +268,7 @@ function App() {
             QR Generator
           </h1>
           <p className="mt-2 text-sm text-zinc-300">
-            Envoyez une image, obtenez un QR code à partager.
+            Envoyez un fichier, obtenez un QR code à partager.
           </p>
         </div>
 
@@ -195,6 +276,38 @@ function App() {
         <div className="animate-fade-up w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl shadow-black/40 backdrop-blur-2xl ring-1 ring-white/5">
           {!result ? (
             <>
+              {/* Onglets Fichier / URL — pill coulissante */}
+              <div className="relative mb-5 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-black/20 p-1 text-sm font-semibold">
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-1 left-1 rounded-lg bg-white shadow transition-transform duration-300 ease-out"
+                  style={{
+                    width: 'calc(50% - 0.375rem)',
+                    transform:
+                      mode === 'url' ? 'translateX(calc(100% + 0.25rem))' : 'translateX(0)',
+                  }}
+                />
+                <button
+                  onClick={() => switchMode('file')}
+                  className={`relative z-10 rounded-lg py-2 transition-colors duration-200 ${
+                    mode === 'file' ? 'text-zinc-900' : 'text-zinc-300 hover:text-white'
+                  }`}
+                >
+                  Fichier
+                </button>
+                <button
+                  onClick={() => switchMode('url')}
+                  className={`relative z-10 rounded-lg py-2 transition-colors duration-200 ${
+                    mode === 'url' ? 'text-zinc-900' : 'text-zinc-300 hover:text-white'
+                  }`}
+                >
+                  URL
+                </button>
+              </div>
+
+              <div key={mode} className="animate-switch">
+              {mode === 'file' ? (
+                <>
               <div
                 onDragOver={(e) => {
                   e.preventDefault()
@@ -215,6 +328,16 @@ function App() {
                     alt="Aperçu"
                     className="animate-pop-in mx-auto max-h-48 rounded-xl object-contain shadow-lg"
                   />
+                ) : file ? (
+                  <div className="animate-pop-in">
+                    <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                      <FileTypeIcon kind={fileKind(file)} />
+                    </div>
+                    <p className="truncate px-2 text-base font-semibold text-[#eceef2]">
+                      {file.name}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-400">{formatSize(file.size)}</p>
+                  </div>
                 ) : (
                   <div className="text-zinc-300">
                     <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 transition-transform duration-200 group-hover:scale-110">
@@ -233,31 +356,55 @@ function App() {
                       </svg>
                     </div>
                     <p className="text-base font-semibold text-[#eceef2]">
-                      Glissez une image ici
+                      Glissez votre fichier ici
                     </p>
                     <p className="mt-1 text-sm text-zinc-300">
                       ou cliquez pour parcourir
                     </p>
                     <p className="mt-4 text-xs text-zinc-400">
-                      JPG, PNG, GIF, WebP · {MAX_MB} Mo max
+                      Tous types de fichiers acceptés · Max {MAX_MB} Mo
                     </p>
                   </div>
                 )}
                 <input
                   ref={inputRef}
                   type="file"
-                  accept={ACCEPTED.join(',')}
                   onChange={onFileChange}
                   className="hidden"
                 />
               </div>
 
-              {file && (
+              {file && preview && (
                 <p className="mt-3 truncate text-sm text-zinc-300">
                   Sélectionné :{' '}
-                  <span className="font-medium text-[#eceef2]">{file.name}</span>
+                  <span className="font-medium text-[#eceef2]">{file.name}</span>{' '}
+                  <span className="text-zinc-400">({formatSize(file.size)})</span>
                 </p>
               )}
+                </>
+              ) : (
+                <div>
+                  <label className="text-xs uppercase tracking-wider text-zinc-400">
+                    URL à encoder
+                  </label>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') generateFromUrl()
+                    }}
+                    placeholder="https://exemple.com"
+                    autoFocus
+                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[#eceef2] outline-none placeholder:text-zinc-500 focus:border-white/30"
+                  />
+                  <p className="mt-2 text-xs text-zinc-400">
+                    Collez un lien, le QR code est généré directement.
+                  </p>
+                </div>
+              )}
+              </div>
 
               {error && (
                 <p className="animate-pop-in mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
@@ -267,15 +414,15 @@ function App() {
 
               <div className="mt-5 flex gap-3">
                 <button
-                  onClick={upload}
-                  disabled={!file || loading}
+                  onClick={mode === 'file' ? upload : generateFromUrl}
+                  disabled={(mode === 'file' ? !file : !url.trim()) || loading}
                   className={`relative flex-1 overflow-hidden rounded-xl bg-white py-2.5 font-semibold text-zinc-900 transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-30 ${
                     loading ? 'shimmer' : ''
                   }`}
                 >
                   {loading ? 'Génération…' : 'Générer le QR code'}
                 </button>
-                {file && !loading && (
+                {((mode === 'file' && file) || (mode === 'url' && url)) && !loading && (
                   <button
                     onClick={reset}
                     className="rounded-xl border border-white/15 px-4 font-medium text-zinc-300 transition-colors hover:bg-white/5"
@@ -297,16 +444,16 @@ function App() {
 
               <div className="mt-5 text-left">
                 <label className="text-xs uppercase tracking-wider text-zinc-400">
-                  Lien de l'image
+                  Lien du fichier
                 </label>
                 <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2">
                   <a
-                    href={result.imageUrl}
+                    href={result.fileUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="flex-1 truncate text-sm text-sky-300 hover:underline"
                   >
-                    {result.imageUrl}
+                    {result.fileUrl}
                   </a>
                   <button
                     onClick={copyLink}
@@ -322,7 +469,7 @@ function App() {
                   onClick={downloadQr}
                   className="rounded-xl bg-white py-2.5 font-semibold text-zinc-900 transition-colors hover:bg-zinc-200"
                 >
-                  Télécharger PNG
+                  Télécharger le QR Code
                 </button>
                 <button
                   onClick={printQr}
@@ -384,7 +531,7 @@ function App() {
                     )}
                     {showUrl && (
                       <p className="mt-1 break-all text-[9px] text-zinc-400">
-                        {result.imageUrl}
+                        {result.fileUrl}
                       </p>
                     )}
                   </div>
@@ -467,7 +614,7 @@ function App() {
         </div>
 
         <p className="animate-fade-up mt-6 text-center text-xs text-zinc-400">
-          Scannez le QR code pour ouvrir l'image directement.
+          Scannez le QR code pour ouvrir le fichier directement.
         </p>
       </main>
 
@@ -539,7 +686,7 @@ function App() {
         {posterTitle && <h2 style={{ color: posterColor }}>{posterTitle}</h2>}
         <img src={result.qrcode} alt="QR code" />
         {posterSubtitle && <p>{posterSubtitle}</p>}
-        {showUrl && <p className="url">{result.imageUrl}</p>}
+        {showUrl && <p className="url">{result.fileUrl}</p>}
       </div>
     )}
     </>

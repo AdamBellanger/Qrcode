@@ -81,13 +81,13 @@ Uploaded images persist in `./data` on the host via the `./data:/data` volume.
 
 ### ⚠️ Reverse-proxy upload limit
 
-Uploads can be up to 25 MB (override with `MAX_UPLOAD_MB`). Make sure your proxy
+Uploads can be up to 100 MB (override with `MAX_UPLOAD_MB`). Make sure your proxy
 allows it, or uploads fail with `413 Request Entity Too Large`:
 
-- **Caddy** — set in the provided `Caddyfile.example` (`max_size 30MB`).
+- **Caddy** — set in the provided `Caddyfile.example` (`max_size 110MB`).
 - **nginx** — add inside the `server` (or `location /api`) block:
   ```nginx
-  client_max_body_size 30m;
+  client_max_body_size 110m;
   ```
 - **Traefik** — no body-size limit by default; nothing to do.
 
@@ -102,5 +102,5 @@ The container exposes `GET /api/health` for health checks (already wired into
 | `PORT`       | `3001` (`3000` in Docker)| Port the server listens on.                  |
 | `DATA_DIR`   | `<repo>/data`            | Where uploads are stored (`/data` in Docker).|
 | `CLIENT_DIR` | `<repo>/client/dist`     | Built frontend served as static files.       |
-| `MAX_UPLOAD_MB` | `25`                  | Max upload size in MB.                        |
+| `MAX_UPLOAD_MB` | `100`                 | Max upload size in MB.                        |
 ```
