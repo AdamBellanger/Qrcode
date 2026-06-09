@@ -1,0 +1,17 @@
+# Caddy reverse proxy — HTTPS automatique (Let's Encrypt) sur Hetzner.
+# Remplace qr.yourdomain.com par ton domaine, puis : caddy run --config ./Caddyfile
+#
+# Caddy n'impose pas de limite de taille d'upload par défaut, donc les 5 Mo
+# passent sans config supplémentaire. La ligne request_body est explicite par
+# sécurité.
+
+qr.yourdomain.com {
+	encode zstd gzip
+
+	# Autorise les uploads jusqu'à 30 Mo (marge au-dessus de la limite 25 Mo de l'app).
+	request_body {
+		max_size 30MB
+	}
+
+	reverse_proxy localhost:3000
+}

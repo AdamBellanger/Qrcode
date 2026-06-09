@@ -1,0 +1,285 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- Flowing "liquid" mesh gradient (Google Antigravity vibe) ------------- */
+.mesh {
+  position: absolute;
+  inset: -20%;
+  filter: blur(75px);
+}
+
+.blob {
+  position: absolute;
+  height: 55vw;
+  width: 55vw;
+  border-radius: 9999px;
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  will-change: transform;
+}
+
+/* Refined greyscale palette — soft silver light, no neon. */
+.blob-1 {
+  top: -10%;
+  left: -5%;
+  background: radial-gradient(circle at 30% 30%, #8b919c, transparent 60%);
+  animation: float-1 22s ease-in-out infinite alternate;
+}
+.blob-2 {
+  top: -15%;
+  right: -10%;
+  background: radial-gradient(circle at 70% 30%, #aab0bb, transparent 60%);
+  animation: float-2 26s ease-in-out infinite alternate;
+}
+.blob-3 {
+  bottom: -20%;
+  left: 5%;
+  background: radial-gradient(circle at 40% 60%, #5b606b, transparent 62%);
+  animation: float-3 30s ease-in-out infinite alternate;
+}
+.blob-4 {
+  bottom: -15%;
+  right: 0%;
+  background: radial-gradient(circle at 60% 60%, #767c87, transparent 60%);
+  animation: float-4 24s ease-in-out infinite alternate;
+}
+.blob-5 {
+  top: 25%;
+  left: 30%;
+  height: 45vw;
+  width: 45vw;
+  background: radial-gradient(circle at 50% 50%, #9aa0ab, transparent 62%);
+  animation: float-1 28s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes float-1 {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(14vw, 10vh) scale(1.25);
+  }
+}
+@keyframes float-2 {
+  from {
+    transform: translate(0, 0) scale(1.1);
+  }
+  to {
+    transform: translate(-12vw, 14vh) scale(0.9);
+  }
+}
+@keyframes float-3 {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(16vw, -12vh) scale(1.2);
+  }
+}
+@keyframes float-4 {
+  from {
+    transform: translate(0, 0) scale(1.05);
+  }
+  to {
+    transform: translate(-14vw, -10vh) scale(1.15);
+  }
+}
+
+/* Soft glow that trails the cursor */
+.cursor-glow {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 32rem;
+  width: 32rem;
+  border-radius: 9999px;
+  filter: blur(90px);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.12),
+    rgba(167, 139, 250, 0.08) 45%,
+    transparent 70%
+  );
+  transform: translate(-50%, -50%);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* ---- Animated waves at the bottom ---------------------------------------- */
+.waves {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40vh;
+  min-height: 240px;
+  max-height: 420px;
+}
+
+.wave-parallax > use {
+  animation: wave-move 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+.wave-parallax > use:nth-child(1) {
+  animation-delay: -2s;
+  animation-duration: 11s;
+}
+.wave-parallax > use:nth-child(2) {
+  animation-delay: -3s;
+  animation-duration: 15s;
+}
+.wave-parallax > use:nth-child(3) {
+  animation-delay: -4s;
+  animation-duration: 19s;
+}
+.wave-parallax > use:nth-child(4) {
+  animation-delay: -5s;
+  animation-duration: 27s;
+}
+@keyframes wave-move {
+  0% {
+    transform: translate3d(-90px, 0, 0);
+  }
+  100% {
+    transform: translate3d(85px, 0, 0);
+  }
+}
+
+/* ---- Entrance / state animations ----------------------------------------- */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-pop-in {
+  animation: pop-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Shimmer overlay used on the loading button */
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.18),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blob,
+  .cursor-glow,
+  .wave-parallax > use,
+  .animate-fade-up,
+  .animate-pop-in,
+  .shimmer::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---- Print: render only the A4 poster ------------------------------------ */
+.print-poster {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  /* Hide the live app, show only the poster. */
+  body > #root > *:not(.print-poster) {
+    display: none !important;
+  }
+  .print-poster {
+    display: flex !important;
+    position: fixed;
+    inset: 0;
+    width: 210mm;
+    height: 297mm;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14mm;
+    padding: 25mm;
+    color: #000;
+    background: #fff;
+  }
+  /* Print the chosen title colour exactly instead of forcing black ink. */
+  .print-poster,
+  .print-poster * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-poster h2 {
+    font-size: 34pt;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .print-poster p {
+    font-size: 13pt;
+    color: #333;
+    margin: 0;
+  }
+  .print-poster img {
+    width: 120mm;
+    height: 120mm;
+  }
+  .print-poster .url {
+    font-size: 12pt;
+    color: #555;
+    word-break: break-all;
+    text-align: center;
+    max-width: 150mm;
+  }
+}
