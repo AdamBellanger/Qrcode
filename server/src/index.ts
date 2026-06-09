@@ -100,28 +100,78 @@ app.post('/api/upload', (req: Request, res: Response) => {
   })
 })
 
-// GET /i/:uuid — serve the stored image directly.
+// Locate the stored file for a UUID (extension is unknown to the public URL).
+// Returns null if no matching file exists.
+function resolveImagePath(
+  uuid: string,
+): { filePath: string; mime: string } | null {
+  for (const ext of Object.keys(EXT_TO_MIME)) {
+    const filePath = path.join(UPLOAD_DIR, `${uuid}.${ext}`)
+    if (fs.existsSync(filePath)) {
+      return { filePath, mime: EXT_TO_MIME[ext] }
+    }
+  }
+  return null
+}
+
+// GET /i/:uuid — serve the stored image wrapped in a centered HTML page.
 app.get('/i/:uuid', (req: Request, res: Response) => {
   const { uuid } = req.params
   // Reject anything that isn't a bare UUID to prevent path traversal.
   if (!/^[0-9a-fA-F-]{36}$/.test(uuid)) {
     return res.status(400).send('Invalid id')
   }
-  for (const ext of Object.keys(EXT_TO_MIME)) {
-    const filePath = path.join(UPLOAD_DIR, `${uuid}.${ext}`)
-    if (fs.existsSync(filePath)) {
-      res.type(EXT_TO_MIME[ext])
-      return res.sendFile(filePath)
-    }
+  if (!resolveImagePath(uuid)) {
+    return res.status(404).send('Image not found')
   }
-  res.status(404).send('Image not found')
+  const imageUrl = `${HOST}/img/${uuid}`
+  res.send(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    img {
+      max-width: 100vw;
+      max-height: 100vh;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <img src="${imageUrl}" alt="image" />
+</body>
+</html>`)
+})
+
+// GET /img/:uuid — serve the raw image file (used by the HTML wrapper above).
+app.get('/img/:uuid', (req: Request, res: Response) => {
+  const { uuid } = req.params
+  if (!/^[0-9a-fA-F-]{36}$/.test(uuid)) {
+    return res.status(400).send('Invalid id')
+  }
+  const found = resolveImagePath(uuid)
+  if (!found) {
+    return res.status(404).send('Image not found')
+  }
+  res.type(found.mime)
+  res.sendFile(found.filePath)
 })
 
 // Serve the built React frontend.
 app.use(express.static(CLIENT_DIR))
 
 // SPA fallback: any non-API GET returns index.html.
-app.get(/^(?!\/(api|i)\/).*/, (_req: Request, res: Response) => {
+app.get(/^(?!\/(api|i|img)\/).*/, (_req: Request, res: Response) => {
   res.sendFile(path.join(CLIENT_DIR, 'index.html'))
 })
 
